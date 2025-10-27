@@ -182,7 +182,7 @@ def update_product_variation(variation_id: UUID, variation: ProductVariationCrea
 @router.delete("/products/variations/{variation_id}")
 def delete_product_variation(variation_id: UUID, db: Session = Depends(get_db)):
     repo = ProductVariationRepository(db)
-    if not repo.delete(variation_id) or not repo.get(variation_id) or repo.get(variation_id).product_id != product_id:
+    if not repo.delete(variation_id) or not repo.get(variation_id):
         raise HTTPException(status_code=404, detail="Variation not found")
     return {"message": "Variation deleted"}
 

@@ -171,50 +171,50 @@ def read_product_variation(variation_id: UUID, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Variation not found")
     return variation
 
-@router.put("/products/{product_id}/variations/{variation_id}", response_model=ProductVariation)
-def update_product_variation(product_id: UUID, variation_id: UUID, variation: ProductVariationCreate, db: Session = Depends(get_db)):
+@router.put("/products/variations/{variation_id}", response_model=ProductVariation)
+def update_product_variation(variation_id: UUID, variation: ProductVariationCreate, db: Session = Depends(get_db)):
     repo = ProductVariationRepository(db)
     updated_variation = repo.update(variation_id, variation)
-    if not updated_variation or updated_variation.product_id != product_id:
+    if not updated_variation:
         raise HTTPException(status_code=404, detail="Variation not found")
     return updated_variation
 
-@router.delete("/products/{product_id}/variations/{variation_id}")
-def delete_product_variation(product_id: UUID, variation_id: UUID, db: Session = Depends(get_db)):
+@router.delete("/products/variations/{variation_id}")
+def delete_product_variation(variation_id: UUID, db: Session = Depends(get_db)):
     repo = ProductVariationRepository(db)
     if not repo.delete(variation_id) or not repo.get(variation_id) or repo.get(variation_id).product_id != product_id:
         raise HTTPException(status_code=404, detail="Variation not found")
     return {"message": "Variation deleted"}
 
 # Endpoints for ProductImage
-@router.post("/products/{product_id}/variations/{variation_id}/images/")
-def create_product_image(product_id: UUID, variation_id: UUID, image: ProductImageCreate, db: Session = Depends(get_db)):
+@router.post("/products/variations/{variation_id}/images/")
+def create_product_image(variation_id: UUID, image: ProductImageCreate, db: Session = Depends(get_db)):
     repo = ProductImageRepository(db)
     image_data = image.dict()
     image_data["product_variation_id"] = variation_id
     return repo.create(image_data)
 
-@router.get("/products/{product_id}/variations/{variation_id}/images/", response_model=List[ProductImage])
-def read_product_images(product_id: UUID, variation_id: UUID, skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+@router.get("/products/variations/{variation_id}/images/", response_model=List[ProductImage])
+def read_product_images(variation_id: UUID, skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     repo = ProductImageRepository(db)
     return repo.get_by_variation(variation_id, skip, limit)
 
-@router.delete("/products/{product_id}/variations/{variation_id}/images/{image_id}")
-def delete_product_image(product_id: UUID, variation_id: UUID, image_id: UUID, db: Session = Depends(get_db)):
+@router.delete("/products/variations/{variation_id}/images/{image_id}") # Can remove variation_id from the path if not needed
+def delete_product_image(variation_id: UUID, image_id: UUID, db: Session = Depends(get_db)):
     repo = ProductImageRepository(db)
     if not repo.delete(image_id):
         raise HTTPException(status_code=404, detail="Image not found")
     return {"message": "Image deleted"}
 
 # Endpoints for Comment
-@router.post("/products/{product_id}/variations/{variation_id}/comments/", response_model=Comment)
-def create_comment(product_id: UUID, variation_id: UUID, comment: CommentCreate, db: Session = Depends(get_db)):
+@router.post("/products/variations/{variation_id}/comments/", response_model=Comment)
+def create_comment(variation_id: UUID, comment: CommentCreate, db: Session = Depends(get_db)):
     repo = CommentRepository(db)
     comment_data = comment.dict()
     comment_data["product_variation_id"] = variation_id
     return repo.create(comment_data)
 
-@router.get("/products/{product_id}/variations/{variation_id}/comments/", response_model=List[Comment])
-def read_comments(product_id: UUID, variation_id: UUID, skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+@router.get("/products/variations/{variation_id}/comments/", response_model=List[Comment])
+def read_comments(variation_id: UUID, skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     repo = CommentRepository(db)
     return repo.get_by_variation(variation_id, skip, limit)

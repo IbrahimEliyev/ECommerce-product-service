@@ -163,11 +163,11 @@ def read_product_variations(product_id: UUID, skip: int = 0, limit: int = 100, d
     variations = repo.get_all(skip, limit)
     return [v for v in variations if v.product_id == product_id]  # Filter by product_id
 
-@router.get("/products/{product_id}/variations/{variation_id}", response_model=ProductVariation)
-def read_product_variation(product_id: UUID, variation_id: UUID, db: Session = Depends(get_db)):
+@router.get("/products/variations/{variation_id}", response_model=ProductVariation)
+def read_product_variation(variation_id: UUID, db: Session = Depends(get_db)):
     repo = ProductVariationRepository(db)
     variation = repo.get(variation_id)
-    if not variation or variation.product_id != product_id:
+    if not variation:
         raise HTTPException(status_code=404, detail="Variation not found")
     return variation
 

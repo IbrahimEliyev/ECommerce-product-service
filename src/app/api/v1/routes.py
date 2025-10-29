@@ -15,7 +15,7 @@ from src.app.repositories.v1.comment import CommentRepository
 
 # Schemas
 from src.app.schemas.v1.category import CategoryCreate, Category
-from src.app.schemas.v1.product import ProductCreate, Product
+from src.app.schemas.v1.product import ProductCreate, Product, ProductUpdate
 from src.app.schemas.v1.product_variation import ProductVariationCreate, ProductVariation
 from src.app.schemas.v1.product_image import ProductImageCreate, ProductImage
 from src.app.schemas.v1.comment import CommentCreate, Comment
@@ -58,10 +58,10 @@ def delete_category(category_id: UUID, db: Session = Depends(get_db)):
     return {"message": "Category deleted"}
 
 # Endpoints for Product
-@router.post("/products/", response_model=Product)
-def create_product(product: ProductCreate, db: Session = Depends(get_db)):
-    repo = ProductRepository(db)
-    return repo.create(product)
+# @router.post("/products/", response_model=Product)
+# def create_product(product: ProductCreate, db: Session = Depends(get_db)):
+#     repo = ProductRepository(db)
+#     return repo.create(product)
 
 @router.get("/products/", response_model=List[Product])
 def read_products(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
@@ -95,20 +95,19 @@ def delete_product(product_id: UUID, db: Session = Depends(get_db)):
 @router.post("/products/", response_model=Product)
 def create_product(product: ProductCreate, db: Session = Depends(get_db)):
     repo = ProductRepository(db)
-    return repo.create_with_categories(product)  # ✅ Pass Pydantic directly
+    return repo.create_with_categories(product)  # ← Pass Pydantic directly  
 
-# @router.put("/products/{product_id}", response_model=Product)
-# def update_product(product_id: UUID, product: ProductUpdate, db: Session = Depends(get_db)):
-#     repo = ProductRepository(db)
-#     # Handle optional category_ids
-#     if product.category_ids is None:
-#         product_dict = product.dict(exclude_unset=True)
-#     else:
-#         product_dict = product.dict()
-#     updated = repo.update_with_categories(product_id, ProductCreate(**product_dict))
-#     if not updated:
-#         raise HTTPException(status_code=404, detail="Product not found")
-#     return updated
+@router.put("/products/{product_id}", response_model=Product)
+def update_product(product_id: UUID, product: ProductUpdate, db: Session = Depends(get_db)):
+    repo = ProductRepository(db)
+    
+    product_dict = product.dict(exclude_unset=True, exclude={"category_ids"})
+    category_ids = product.category_ids or []
+    
+    updated = repo.update_with_categories(product_id, product_dict, category_ids)
+    if not updated:
+        raise HTTPException(status_code=404, detail="Product not found")
+    return updated
 
 # === MANY-TO-MANY RELATIONSHIP ENDPOINTS ===
 # @router.get("/products/{product_id}/categories/", response_model=List[Category])
@@ -153,7 +152,7 @@ def create_product(product: ProductCreate, db: Session = Depends(get_db)):
 
 # Endpoints for ProductVariation
 @router.post("/products/{product_id}/variations/", response_model=ProductVariation)
-def create_product_variation(product_id: UUID, variation: ProductVariationCreate, db: Session = Depends(get_db)):
+def create_product_variation(product_id: UUID, variation: ProductVariationCreate, db: Session = Depends(get_db)): # Can be eliminated(product_id)
     repo = ProductVariationRepository(db)
     return repo.create(variation)
 

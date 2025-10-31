@@ -76,13 +76,6 @@ def read_product(product_id: UUID, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Product not found")
     return product
 
-@router.put("/products/{product_id}", response_model=Product)
-def update_product(product_id: UUID, product: ProductCreate, db: Session = Depends(get_db)):
-    repo = ProductRepository(db)
-    updated_product = repo.update(product_id, product)
-    if not updated_product:
-        raise HTTPException(status_code=404, detail="Product not found")
-    return updated_product
 
 @router.delete("/products/{product_id}")
 def delete_product(product_id: UUID, db: Session = Depends(get_db)):
@@ -101,12 +94,16 @@ def create_product(product: ProductCreate, db: Session = Depends(get_db)):
 def update_product(product_id: UUID, product: ProductUpdate, db: Session = Depends(get_db)):
     repo = ProductRepository(db)
     
-    product_dict = product.dict(exclude_unset=True, exclude={"category_ids"})
+    # Convert ProductUpdate → ProductCreate, preserving only SET fields
+    data = product.dict(exclude_unset=True, exclude={"category_ids"})
     category_ids = product.category_ids or []
     
-    updated = repo.update_with_categories(product_id, product_dict, category_ids)
+    # Rebuild as ProductCreate
+    product_create = ProductCreate(**data, category_ids=category_ids)
+    
+    updated = repo.update_with_categories(product_id, product_create)
     if not updated:
-        raise HTTPException(status_code=404, detail="Product not found")
+        raise HTTPException(404, "Product not found")
     return updated
 
 # === MANY-TO-MANY RELATIONSHIP ENDPOINTS ===

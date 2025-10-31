@@ -32,13 +32,22 @@ class ProductRepository(BaseRepository[Product]):
 
     def update_with_categories(self, id: UUID, obj_in: ProductCreate) -> Optional[Product]:
         category_ids = obj_in.category_ids or []
-        clean_data = obj_in.dict(exclude={"category_ids"})
-        clean_product = ProductBase(**clean_data)  # ← ProductBase = clean
         
-        db_product = super().update(id, clean_product)
+        # Get only SET fields from ProductCreate
+        clean_data = obj_in.dict(exclude={"category_ids"}, exclude_unset=True)
+        
+        # Only update fields that were actually sent
+        if clean_data:
+            clean_product = ProductBase(**clean_data)
+            db_product = super().update(id, clean_product)
+        else:
+            # No product fields to update → just get existing
+            db_product = super().get(id)
+        
         if not db_product:
             return None
         
+        # Replace categories
         self.db_session.execute(delete(ProductCategory).where(ProductCategory.product_id == id))
         for category_id in category_ids:
             pc = ProductCategory(product_id=id, category_id=category_id)
@@ -46,7 +55,6 @@ class ProductRepository(BaseRepository[Product]):
         self.db_session.commit()
         return db_product
 
-    # REST OF YOUR METHODS (PERFECT)
     def get_categories_for_product(self, product_id: UUID) -> List[Category]:
         return self.db_session.query(Category).join(
             ProductCategory,

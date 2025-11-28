@@ -149,9 +149,21 @@ def update_product(product_id: UUID, product: ProductUpdate, db: Session = Depen
 
 # Endpoints for ProductVariation
 @router.post("/products/{product_id}/variations/", response_model=ProductVariation)
-def create_product_variation(product_id: UUID, variation: ProductVariationCreate, db: Session = Depends(get_db)): # Can be eliminated(product_id)
+def create_product_variation(
+    product_id: UUID,
+    variation: ProductVariationCreate,
+    db: Session = Depends(get_db)
+):
     repo = ProductVariationRepository(db)
-    return repo.create(variation)
+
+    # Convert model to dict (or leave as is if already dict)
+    variation_data = variation.dict(exclude_unset=True)
+    variation_data["product_id"] = product_id
+
+    return repo.create(variation_data)
+
+
+
 
 @router.get("/products/{product_id}/variations/", response_model=List[ProductVariation])
 def read_product_variations(product_id: UUID, skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):

@@ -10,12 +10,19 @@ class BaseRepository(Generic[T]):
         self.model = model
         self.db_session = db_session
 
-    def create(self, obj_in) -> T:
-        db_obj = self.model(**obj_in.dict())
+    def create(self, obj_in):
+    # Allow both dict and Pydantic model
+        if hasattr(obj_in, "dict"):
+            data = obj_in.dict(exclude_unset=True)
+        else:
+            data = dict(obj_in)
+
+        db_obj = self.model(**data)
         self.db_session.add(db_obj)
         self.db_session.commit()
         self.db_session.refresh(db_obj)
         return db_obj
+
 
     def get(self, id: UUID) -> Optional[T]:
         return self.db_session.query(self.model).filter(self.model.id == id).first()

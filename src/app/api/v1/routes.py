@@ -207,8 +207,33 @@ def read_product_images(variation_id: UUID, skip: int = 0, limit: int = 100, db:
     repo = ProductImageRepository(db)
     return repo.get_by_variation(variation_id, skip, limit)
 
-@router.delete("/products/variations/{variation_id}/images/{image_id}") # Can remove variation_id from the path if not needed
-def delete_product_image(variation_id: UUID, image_id: UUID, db: Session = Depends(get_db)):
+@router.get("/products/images/{image_id}", response_model=ProductImage)
+def get_product_image(image_id: UUID, db: Session = Depends(get_db)):
+    repo = ProductImageRepository(db)
+
+    image = repo.get(image_id)
+    if not image:
+        raise HTTPException(status_code=404, detail="Image not found")
+
+    return image
+
+@router.put("/products/images/{image_id}", response_model=ProductImage)
+def update_product_image(
+    image_id: UUID,
+    update_data: ProductImageCreate,
+    db: Session = Depends(get_db)
+):
+    repo = ProductImageRepository(db)
+
+    updated = repo.update(image_id, update_data)
+    if not updated:
+        raise HTTPException(status_code=404, detail="Image not found")
+
+    return updated
+
+
+@router.delete("/products/variations/images/{image_id}")
+def delete_product_image(image_id: UUID, db: Session = Depends(get_db)):
     repo = ProductImageRepository(db)
     if not repo.delete(image_id):
         raise HTTPException(status_code=404, detail="Image not found")
@@ -226,3 +251,33 @@ def create_comment(variation_id: UUID, comment: CommentCreate, db: Session = Dep
 def read_comments(variation_id: UUID, skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     repo = CommentRepository(db)
     return repo.get_by_variation(variation_id, skip, limit)
+
+@router.get("/products/comments/{comment_id}", response_model=Comment)
+def read_comment(comment_id: UUID, db: Session = Depends(get_db)):
+    repo = CommentRepository(db)
+    comment = repo.get(comment_id)
+    if not comment:
+        raise HTTPException(status_code=404, detail="Comment not found")
+    return comment
+
+@router.put("/products/comments/{comment_id}", response_model=Comment)
+def update_comment(
+    comment_id: UUID,
+    update_data: CommentCreate,
+    db: Session = Depends(get_db)
+):
+    repo = CommentRepository(db)
+
+    updated = repo.update(comment_id, update_data)
+    if not updated:
+        raise HTTPException(status_code=404, detail="Comment not found")
+
+    return updated
+
+@router.delete("/products/comments/{comment_id}")
+def delete_comment(comment_id: UUID, db: Session = Depends(get_db)):
+    repo = CommentRepository(db)
+    if not repo.delete(comment_id):
+        raise HTTPException(status_code=404, detail="Comment not found")
+    return {"message": "Comment deleted"}
+

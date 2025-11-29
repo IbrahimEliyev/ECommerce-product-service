@@ -8,8 +8,9 @@ class ProductImageBase(BaseModel):
     image_url: str = Field(..., max_length=255)
     alt_text: Optional[str] = Field(None, max_length=100)
 
-class ProductImageCreate(ProductImageBase):
-    pass
+class ProductImageCreate(BaseModel):
+    image_url: str = Field(..., max_length=255)
+    alt_text: Optional[str] = Field(None, max_length=100)
 
 class ProductImage(ProductImageBase):
     id: UUID

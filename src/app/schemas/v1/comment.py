@@ -9,8 +9,10 @@ class CommentBase(BaseModel):
     rating: int = Field(..., ge=1, le=5)
     content: str = Field(..., max_length=1000)
 
-class CommentCreate(CommentBase):
-    pass
+class CommentCreate(BaseModel):
+    user_id: UUID = Field(..., description="ID of the user, managed by User service")
+    rating: int = Field(..., ge=1, le=5)
+    content: str = Field(..., max_length=1000)
 
 class Comment(CommentBase):
     comment_id: UUID
